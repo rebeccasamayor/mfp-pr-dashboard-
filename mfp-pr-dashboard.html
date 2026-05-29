@@ -493,7 +493,7 @@ Rules: conversational not corporate, no jargon, data-backed, under 300 words, on
     let raw = data.content?.[0]?.text || '{}';
     raw = raw.replace(/```json|```/g, '').trim();
     const pitch = JSON.parse(raw);
-    renderPitch(pitch, article, i);
+    renderPitch(pitch, article, i, messagingLabel);
   } catch(e) {
     console.error('Pitch error:', e);
     document.getElementById('pitchContainer').innerHTML = '<div style="color:var(--warn);padding:20px;font-size:13px;">Error: ' + e.message + '</div>';
@@ -502,7 +502,7 @@ Rules: conversational not corporate, no jargon, data-backed, under 300 words, on
   btn.innerHTML = '✉ Generate Pitch';
 }
 
-function renderPitch(pitch, article, idx) {
+function renderPitch(pitch, article, idx, messagingLabel) {
   window._currentPitch = pitch;
   document.getElementById('pitchContainer').innerHTML = `
     <div class="pitch-story-ref"><strong>${article.title}</strong><span>${article.sourceName} · ${formatDate(article.pubDate)} · <span style="color:var(--accent);font-weight:500;">${messagingLabel} messaging</span></span></div>
