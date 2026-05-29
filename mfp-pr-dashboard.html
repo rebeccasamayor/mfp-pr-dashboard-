@@ -451,11 +451,11 @@ async function generatePitch(i) {
   btn.disabled = true;
   btn.innerHTML = '<span class="loading-spinner"></span> Generating...';
 
+  const { label: messagingLabel, messaging: selectedMessaging } = selectMessaging(article);
+
   document.getElementById('pitchContainer').innerHTML = `
     <div class="pitch-story-ref"><strong>${article.title}</strong><span>${article.sourceName} · ${formatDate(article.pubDate)} · <span style="color:var(--accent);font-weight:500;">${messagingLabel} messaging</span></span></div>
     <div style="text-align:center;padding:40px 0;color:var(--text3);"><span class="loading-spinner dark"></span><div style="margin-top:12px;font-size:13px;">Drafting your pitch…</div></div>`;
-
-  const { label: messagingLabel, messaging: selectedMessaging } = selectMessaging(article);
   const desc = stripHtml(article.description || '').substring(0, 500);
   const prompt = `You are a PR strategist for MyFitnessPal. Draft a journalist pitch based on this story and our brand messaging. Return ONLY a JSON object with these keys:
 {
