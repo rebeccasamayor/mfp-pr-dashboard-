@@ -221,7 +221,17 @@ function checkPassword() {
   }
 }
 
-const KEYWORDS = ['GLP-1', 'GLP-1 medication', 'weight loss drugs', 'nutrition', 'nutrition tracking', 'weight loss'];
+const KEYWORDS = [
+  'GLP-1', 'GLP1', 'GLP-1 medication', 'Ozempic', 'Wegovy', 'semaglutide', 'tirzepatide', 'Mounjaro', 'Zepbound',
+  'weight loss drug', 'weight-loss drug', 'obesity drug', 'obesity medication',
+  'weight loss', 'weight management', 'losing weight', 'obesity',
+  'nutrition', 'nutrition tracking', 'food tracking', 'calorie tracking', 'macro tracking',
+  'healthy eating', 'diet', 'dieting', 'food logging',
+  'protein intake', 'muscle loss', 'body composition',
+  'AI nutrition', 'nutrition coach', 'nutrition app', 'food app',
+  'metabolic health', 'gut health', 'intermittent fasting',
+  'MyFitnessPal'
+];
 
 const RSS_SOURCES = [
   { name: 'STAT News', url: 'https://www.statnews.com/feed/' },
