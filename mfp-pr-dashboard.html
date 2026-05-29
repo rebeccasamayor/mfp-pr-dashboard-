@@ -244,13 +244,18 @@ const RSS_SOURCES = [
   { name: 'Glamour', url: 'https://www.glamour.com/feed/rss' },
   { name: 'Bon Appetit', url: 'https://www.bonappetit.com/feed/rss' },
   { name: 'Vogue', url: 'https://www.vogue.com/feed/rss' },
-  { name: "Women's Health", url: 'https://www.womenshealthmag.com/feed/all' },
-  { name: "Men's Health", url: 'https://www.menshealth.com/feed/all' },
+  { name: "Women's Health", url: 'https://www.womenshealthmag.com/rss/all.xml' },
+  { name: "Men's Health", url: 'https://www.menshealth.com/rss/all.xml' },
+  { name: 'Shape', url: 'https://www.shape.com/rss/all.xml' },
   { name: 'Everyday Health', url: 'https://www.everydayhealth.com/news/rss.xml' },
   { name: 'Verywell Health', url: 'https://www.verywellhealth.com/feed' },
   { name: 'Verywell Fit', url: 'https://www.verywellfit.com/feed' },
+  { name: 'Healthline', url: 'https://www.healthline.com/health-news/feed' },
+  { name: 'Medical News Today', url: 'https://www.medicalnewstoday.com/rss/wordlist/weight-loss' },
   { name: 'Mind Body Green', url: 'https://www.mindbodygreen.com/rss.xml' },
   { name: 'Clean Eating', url: 'https://www.cleaneatingmag.com/feed/' },
+  { name: 'Business Insider', url: 'https://www.businessinsider.com/rss' },
+  { name: 'Axios', url: 'https://www.axios.com/feeds/feed.rss' },
 ];
 
 const MESSAGING = {
@@ -365,10 +370,19 @@ function renderKeywords() {
 function articleMatchesKeywords(article) {
   const title = (article.title || '').toLowerCase();
   const desc = (article.description || '').toLowerCase();
-  return KEYWORDS.some(kw => {
+  const matches = KEYWORDS.some(kw => {
     const k = kw.toLowerCase();
     return title.includes(k) || desc.includes(k);
   });
+  if (!matches) return false;
+  if (!article.pubDate) return true;
+  try {
+    const pub = new Date(article.pubDate);
+    if (isNaN(pub.getTime())) return true;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 14);
+    return pub >= cutoff;
+  } catch { return true; }
 }
 
 function getMatchedKeyword(article) {
@@ -503,26 +517,36 @@ async function generatePitch(i) {
     <div class="pitch-story-ref"><strong>${article.title}</strong><span>${article.sourceName} · ${formatDate(article.pubDate)} · <span style="color:var(--accent);font-weight:500;">${messagingLabel} messaging</span></span></div>
     <div style="text-align:center;padding:40px 0;color:var(--text3);"><span class="loading-spinner dark"></span><div style="margin-top:12px;font-size:13px;">Drafting your pitch…</div></div>`;
   const desc = stripHtml(article.description || '').substring(0, 500);
-  const prompt = `You are a PR strategist for MyFitnessPal. Draft a journalist pitch based on this story and our brand messaging. Return ONLY a JSON object with these keys:
-{
-  "greeting": "Hi [Journalist first name],",
-  "personalized_opener": "1-2 sentences referencing their beat or this specific story.",
-  "hook": "Reaching out because [specific news event + date] — [one sentence on why this is a cultural or policy inflection point].",
-  "brutal_truth": "A data point or trend that signals the problem is real and urgent.",
-  "rising_trend": "Why this topic is gaining momentum now.",
-  "why_now": "The specific stakes — who's affected, what changes, why now.",
-  "tension_angle": "1-2 sentences on the core tension. Then: MyFitnessPal is positioned to offer a credible POV because [specific reason].",
-  "offer": "I'd love to connect you with [SPOKESPERSON — TO BE FILLED BY TEAM], [credential], to discuss [specific angle].",
-  "cta": "Any interest in setting up a quick chat? Happy to send over data/research/a quote if helpful.",
-  "signoff": "Best,\\n[Your name]"
-}
+  const prompt = `You are a PR strategist for MyFitnessPal. Write a media pitch email based on the news story and brand messaging below.
+
+Write it as a flowing prose email — no labeled sections, no JSON. Follow this exact structure:
+
+Hi [First name],
+
+[Personalized intro.] Reaching out because [news peg and date] — [one sentence on why this is culturally significant right now].
+
+• The brutal truth: [real data point or trend showing urgency]
+• The rising trend: [why this topic is gaining momentum now]
+• Why this matters now: [specific stakes — who's affected, why now vs later]
+
+[One short paragraph naturally connecting the news to MFP's angle and why MFP is uniquely positioned to comment. Do NOT label this paragraph — just write it as natural prose.]
+
+I'd love to connect you with [SPOKESPERSON — TO BE FILLED BY TEAM], [credential], to discuss [specific angle]. With MyFitnessPal [relevant product/feature context], [they are/the brand is] uniquely positioned to weigh in. Any interest in setting up a chat?
+
+Best,
+[Your name]
 
 NEWS STORY: ${article.title} (${article.sourceName}, ${formatDate(article.pubDate)})
 SUMMARY: ${desc}
 
 MFP MESSAGING (${messagingLabel}): ${selectedMessaging}
 
-Rules: conversational not corporate, no jargon, under 300 words, one angle only. The offer field MUST keep "[SPOKESPERSON — TO BE FILLED BY TEAM]" as a literal placeholder. CRITICAL: Do NOT invent or fabricate any statistics, numbers, percentages, or data points. Only use data that appears verbatim in the news story summary or the MFP messaging provided above. If no specific data point exists, describe the trend in qualitative terms instead. Return ONLY valid JSON, no markdown.`;
+Rules:
+- Conversational, not corporate. No jargon. Under 300 words. One angle only.
+- The personalized intro MUST be the literal placeholder text: [Personalized intro.]
+- The spokesperson line MUST contain the literal text: [SPOKESPERSON — TO BE FILLED BY TEAM]
+- NEVER invent statistics. Only use data from the news story or MFP messaging above.
+- Return ONLY the email text. No JSON, no markdown, no section labels.`;
 
   try {
     const resp = await fetch('/.netlify/functions/claude', {
@@ -536,10 +560,9 @@ Rules: conversational not corporate, no jargon, under 300 words, one angle only.
       document.getElementById('pitchContainer').innerHTML = '<div style="color:var(--warn);padding:20px;font-size:13px;">API error: ' + data.error.message + '</div>';
       return;
     }
-    let raw = data.content?.[0]?.text || '{}';
-    raw = raw.replace(/```json|```/g, '').trim();
-    const pitch = JSON.parse(raw);
-    renderPitch(pitch, article, i, messagingLabel);
+    let raw = data.content?.[0]?.text || '';
+    raw = raw.replace(/```[a-z]*\n?|```/g, '').trim();
+    renderPitch(raw, article, i, messagingLabel);
   } catch(e) {
     console.error('Pitch error:', e);
     document.getElementById('pitchContainer').innerHTML = '<div style="color:var(--warn);padding:20px;font-size:13px;">Error: ' + e.message + '</div>';
@@ -548,29 +571,19 @@ Rules: conversational not corporate, no jargon, under 300 words, one angle only.
   btn.innerHTML = '✉ Generate Pitch';
 }
 
-function renderPitch(pitch, article, idx, messagingLabel) {
-  window._currentPitch = pitch;
+function renderPitch(pitchText, article, idx, messagingLabel) {
+  window._currentPitch = pitchText;
+  const highlighted = pitchText
+    .replace(/\[Personalized intro\.\]/g, '<span style="background:var(--blue-bg);color:var(--blue);padding:1px 4px;border-radius:3px;font-style:italic;">[Personalized intro.]</span>')
+    .replace(/\[SPOKESPERSON[^\]]*\]/g, '<span style="background:var(--warn-bg);color:var(--warn);padding:2px 5px;border-radius:3px;font-weight:500;">[SPOKESPERSON — TO BE FILLED BY TEAM]</span>')
+    .replace(/\[Your name\]/g, '<span style="background:var(--tag-bg);color:var(--text2);padding:1px 4px;border-radius:3px;">[Your name]</span>')
+    .replace(/\[First name\]/g, '<span style="background:var(--tag-bg);color:var(--text2);padding:1px 4px;border-radius:3px;">[First name]</span>')
+    .replace(/\n/g, '<br>');
+
   document.getElementById('pitchContainer').innerHTML = `
     <div class="pitch-story-ref"><strong>${article.title}</strong><span>${article.sourceName} · ${formatDate(article.pubDate)} · <span style="color:var(--accent);font-weight:500;">${messagingLabel} messaging</span></span></div>
-    <div class="pitch-section"><div class="pitch-section-label">Greeting</div><div class="pitch-section-content">${pitch.greeting || ''}</div></div>
-    <div class="pitch-section"><div class="pitch-section-label">Personalized opener</div><div class="pitch-section-content">${pitch.personalized_opener || ''}</div></div>
-    <div class="pitch-section"><div class="pitch-section-label">The hook — news peg</div><div class="pitch-section-content">${pitch.hook || ''}</div></div>
-    <div class="pitch-section">
-      <div class="pitch-section-label">Why it matters — 3-point framing</div>
-      <div class="three-point-grid">
-        <div class="three-point-card"><div class="three-point-card-label">The brutal truth</div><p>${pitch.brutal_truth || ''}</p></div>
-        <div class="three-point-card"><div class="three-point-card-label">The rising trend</div><p>${pitch.rising_trend || ''}</p></div>
-        <div class="three-point-card"><div class="three-point-card-label">Why it matters now</div><p>${pitch.why_now || ''}</p></div>
-      </div>
-    </div>
-    <div class="pitch-section"><div class="pitch-section-label">The tension + MFP angle</div><div class="pitch-section-content">${pitch.tension_angle || ''}</div></div>
-    <div class="pitch-section"><div class="pitch-section-label">The offer — spokesperson + hook</div><div class="pitch-section-content placeholder">${pitch.offer || ''}</div></div>
-    <div class="pitch-section"><div class="pitch-section-label">CTA</div><div class="pitch-section-content">${pitch.cta || ''}</div></div>
-    <div class="pitch-section"><div class="pitch-section-label">Sign-off</div><div class="pitch-section-content">${pitch.signoff || ''}</div></div>
-    <div class="pitch-section">
-      <div class="pitch-section-label">Tone calibration</div>
-      <div class="tone-tags"><span class="tone-tag">Conversational</span><span class="tone-tag">Data-backed</span><span class="tone-tag">No jargon</span><span class="tone-tag">Under 300 words</span><span class="tone-tag">One angle only</span></div>
-    </div>
+    <div style="background:var(--bg);border-radius:8px;padding:18px 20px;font-size:14px;line-height:1.8;color:var(--text);border:1px solid var(--border);">${highlighted}</div>
+    <div class="tone-tags" style="margin-top:10px;"><span class="tone-tag">Conversational</span><span class="tone-tag">No jargon</span><span class="tone-tag">Under 300 words</span><span class="tone-tag">One angle only</span></div>
     <div class="pitch-actions">
       <button class="copy-btn" onclick="copyPitch()">Copy full pitch</button>
       <button class="regen-btn" onclick="generatePitch(${idx})">↻ Regenerate</button>
@@ -580,7 +593,7 @@ function renderPitch(pitch, article, idx, messagingLabel) {
 function copyPitch() {
   const p = window._currentPitch;
   if (!p) return;
-  const text = [p.greeting, '', p.personalized_opener, '', p.hook, '', p.brutal_truth, '', p.rising_trend, '', p.why_now, '', p.tension_angle, '', p.offer, '', p.cta, '', p.signoff].join('\n');
+  const text = typeof p === 'string' ? p : '';
   navigator.clipboard.writeText(text).then(() => showToast('Pitch copied ✓'));
 }
 
