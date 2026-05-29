@@ -396,14 +396,23 @@ async function fetchRSS(source) {
     const resp = await fetch(url);
     const text = await resp.text();
     const xml = new DOMParser().parseFromString(text, 'text/xml');
-    return Array.from(xml.querySelectorAll('item')).map(item => ({
+    const items = Array.from(xml.querySelectorAll('item'));
+    const matched = items.filter(item => {
+      const t = (item.querySelector('title')?.textContent || '') + ' ' + (item.querySelector('description')?.textContent || '');
+      return KEYWORDS.some(kw => t.toLowerCase().includes(kw.toLowerCase()));
+    });
+    console.log(source.name + ': ' + items.length + ' total, ' + matched.length + ' keyword matches');
+    return items.map(item => ({
       title: item.querySelector('title')?.textContent || '',
       description: item.querySelector('description')?.textContent || '',
       link: item.querySelector('link')?.textContent || '',
       pubDate: item.querySelector('pubDate')?.textContent || '',
       sourceName: source.name
     }));
-  } catch { return []; }
+  } catch(e) { 
+    console.log(source.name + ': ERROR - ' + e.message);
+    return []; 
+  }
 }
 
 async function loadFeed() {
