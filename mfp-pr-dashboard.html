@@ -259,8 +259,18 @@ KEY MESSAGES:
 - Bridging the gap between prescription and daily life: With clear tracking, users can feel informed, in control, and build habits that make their GLP-1 journey work for them.
 - Your journey, your data: Every GLP-1 experience is different. MyFitnessPal GLP-1 Support gives users the tools to understand their own progress.
 
-UNIVERSAL TRACKING MESSAGE (always relevant): MyFitnessPal helps users replace guesswork with clarity — building awareness of what they eat, how they feel, and how their choices connect to their goals.
-TONE: Conversational, not corporate. Data-backed. No jargon. Under 300 words. Facts > Fads.
+APPROVED CLAIMS (use these exact stats — do not invent others):
+- #1 global nutrition and food tracking app
+- 14M monthly active users
+- Nearly 1M users achieve their health and fitness goals each year
+- MFP has one of the world's largest food databases, with over 20.5 million foods
+- 9 out of 10 MFP users say MyFitnessPal has helped them make progress toward their health goals (*based on a user survey)
+- Studies show that people who track their food are more likely to achieve their weight loss goals
+- Members who log their food at least 4 days in their first week are 7x more likely to show progress toward their weight loss goal
+- Nearly 1 billion average monthly food logs globally
+
+UNIVERSAL TRACKING MESSAGE: MyFitnessPal helps users replace guesswork with clarity — building awareness of what they eat, how they feel, and how their choices connect to their goals.
+TONE: Conversational, not corporate. Data-backed. No jargon. Under 300 words. Facts > Fads. Only use stats from the APPROVED CLAIMS list above — never invent numbers.
 `,
 
   aiCoach: `
@@ -281,8 +291,18 @@ WHAT IT DOES:
 
 WHY NOW: Consumers increasingly want natural, conversational ways to get health and nutrition guidance, but expect it to be grounded in their individual goals and history, not generic advice.
 
-UNIVERSAL TRACKING MESSAGE (always relevant): MyFitnessPal helps users replace guesswork with clarity — building awareness of what they eat, how they feel, and how their choices connect to their goals.
-TONE: Conversational, not corporate. Data-backed. No jargon. Under 300 words. Facts > Fads.
+APPROVED CLAIMS (use these exact stats — do not invent others):
+- #1 global nutrition and food tracking app
+- 14M monthly active users
+- MFP has one of the world's largest food databases, with over 20.5 million foods
+- 9 out of 10 MFP users say MyFitnessPal has helped them make progress toward their health goals (*based on a user survey)
+- 88% of users surveyed say they don't have any idea how much protein, fiber, carbs, sugar, and salt they consume daily (*based on a user survey)
+- Nearly 1 billion average monthly food logs globally
+- AI Coach is powered by 20+ years of MyFitnessPal nutritional expertise and one of the world's largest food logging databases
+- AI Coach is available through Premium and Premium+ subscriptions
+
+UNIVERSAL TRACKING MESSAGE: MyFitnessPal helps users replace guesswork with clarity — building awareness of what they eat, how they feel, and how their choices connect to their goals.
+TONE: Conversational, not corporate. Data-backed. No jargon. Under 300 words. Facts > Fads. Only use stats from the APPROVED CLAIMS list above — never invent numbers.
 `,
 
   overarching: `
@@ -296,8 +316,24 @@ KEY MESSAGES:
 2. MyFitnessPal goes beyond the food log, translating nutrition data into clear, actionable coaching. By removing the guesswork around meal decisions, MyFitnessPal helps users understand not just what they ate, but how it connects to their goals.
 3. MyFitnessPal meets users at every stage of life — from performance and longevity to menopause and gut health. What you eat today shapes your health for years to come.
 
-UNIVERSAL TRACKING MESSAGE (always relevant): MyFitnessPal helps users replace guesswork with clarity — building awareness of what they eat, how they feel, and how their choices connect to their goals.
-TONE: Conversational, not corporate. Data-backed. No jargon. Under 300 words. Facts > Fads.
+APPROVED CLAIMS (use these exact stats — do not invent others):
+- #1 global nutrition and food tracking app
+- 14M monthly active users
+- Community of over 280M users since 2005
+- Nearly 1M users achieve their health and fitness goals each year
+- Over 2,000 people per day reach their goals with MFP
+- MFP has one of the world's largest food databases, with over 20.5 million foods
+- 9 out of 10 MFP users say MyFitnessPal has helped them make progress toward their health goals (*based on a user survey)
+- 9 out of 10 MFP users say MyFitnessPal has helped them make better choices (*based on a user survey)
+- Studies show that people who track their food are more likely to achieve their weight loss goals
+- Members who log their food at least 4 days in their first week are 7x more likely to show progress toward their weight loss goal
+- Nearly 1 billion average monthly food logs globally
+- The MyFitnessPal global community logged 9.3 billion foods in 2024 — that's an average of 296 foods logged every second
+- 88% of users surveyed say they don't have any idea how much protein, fiber, carbs, sugar, and salt they consume daily (*based on a user survey)
+- 65% of users surveyed feel at a total loss when it comes to managing their weight (*based on a user survey)
+
+UNIVERSAL TRACKING MESSAGE: MyFitnessPal helps users replace guesswork with clarity — building awareness of what they eat, how they feel, and how their choices connect to their goals.
+TONE: Conversational, not corporate. Data-backed. No jargon. Under 300 words. Facts > Fads. Only use stats from the APPROVED CLAIMS list above — never invent numbers.
 `
 };
 
@@ -327,7 +363,9 @@ function articleMatchesKeywords(article) {
 
 function isOldArticle(article) {
   try {
+    if (!article.pubDate) return false;
     const pub = new Date(article.pubDate);
+    if (isNaN(pub.getTime())) return false;
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 7);
     return pub < cutoff;
@@ -476,7 +514,7 @@ SUMMARY: ${desc}
 
 MFP MESSAGING (${messagingLabel}): ${selectedMessaging}
 
-Rules: conversational not corporate, no jargon, data-backed, under 300 words, one angle only. The offer field MUST keep "[SPOKESPERSON — TO BE FILLED BY TEAM]" as a literal placeholder. Return ONLY valid JSON, no markdown.`;
+Rules: conversational not corporate, no jargon, under 300 words, one angle only. The offer field MUST keep "[SPOKESPERSON — TO BE FILLED BY TEAM]" as a literal placeholder. CRITICAL: Do NOT invent or fabricate any statistics, numbers, percentages, or data points. Only use data that appears verbatim in the news story summary or the MFP messaging provided above. If no specific data point exists, describe the trend in qualitative terms instead. Return ONLY valid JSON, no markdown.`;
 
   try {
     const resp = await fetch('/.netlify/functions/claude', {
