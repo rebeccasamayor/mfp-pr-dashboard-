@@ -368,18 +368,7 @@ function articleMatchesKeywords(article) {
   return KEYWORDS.some(kw => {
     const k = kw.toLowerCase();
     return title.includes(k) || desc.includes(k);
-  }) && !isOldArticle(article);
-}
-
-function isOldArticle(article) {
-  try {
-    if (!article.pubDate) return false;
-    const pub = new Date(article.pubDate);
-    if (isNaN(pub.getTime())) return false;
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 7);
-    return pub < cutoff;
-  } catch { return false; }
+  });
 }
 
 function getMatchedKeyword(article) {
